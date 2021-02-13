@@ -1,5 +1,5 @@
 To develop and deploy this app, you need to set up
-a DynamoDB table with a DynamoDB Stream first (in `us-east-1`). 
+a DynamoDB table with a DynamoDB Stream with type `NEW_IMAGE` first (in `us-east-1`). 
 
 Supply the stream
 ARN when deploying the stack with the environment variable
