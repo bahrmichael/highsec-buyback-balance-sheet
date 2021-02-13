@@ -1,0 +1,1 @@
+AWS_REGION=us-east-1 LEDGER_NAME=LedgerDatabase-xxxxx ts-node runFromLocal.ts

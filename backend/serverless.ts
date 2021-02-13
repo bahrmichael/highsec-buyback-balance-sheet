@@ -1,6 +1,6 @@
 import type { AWS } from '@serverless/typescript';
 
-import {ingestContract, reactToTransaction} from './src/functions';
+import {ingestContract, onTransaction} from './src/functions';
 
 const serverlessConfiguration: AWS = {
   service: 'highsec-logistics-balance-sheet',
@@ -14,7 +14,8 @@ const serverlessConfiguration: AWS = {
   plugins: ['serverless-webpack', 'serverless-iam-roles-per-function'],
   provider: {
     name: 'aws',
-    runtime: 'nodejs12.x',
+    runtime: 'nodejs14.x',
+    stage: 'test-3',
     apiGateway: {
       minimumCompressionSize: 1024,
       shouldStartNameWithService: true,
@@ -24,7 +25,7 @@ const serverlessConfiguration: AWS = {
     },
     lambdaHashingVersion: '20201221',
   },
-  functions: { ingestContract, reactToTransaction },
+  functions: { ingestContract, onTransaction },
   resources: {
     Resources: {
       TransactionsTable: {
@@ -44,23 +45,18 @@ const serverlessConfiguration: AWS = {
           }, {
             AttributeName: 'transactionId',
             AttributeType: 'S'
-          }]
-        }
-      },
-      BalanceTable: {
-        Type: 'AWS::DynamoDB::Table',
-        Properties: {
-          BillingMode: 'PAY_PER_REQUEST',
-          KeySchema: [{
-            AttributeName: 'characterId',
-            KeyType: 'HASH'
           }],
-          AttributeDefinitions: [{
-            AttributeName: 'characterId',
-            AttributeType: 'N'
-          }]
-        }
+          StreamSpecification: {
+            StreamViewType: 'NEW_IMAGE'
+          }
+        },
       },
+      LedgerDatabase: {
+        Type: 'AWS::QLDB::Ledger',
+        Properties: {
+          PermissionsMode: 'ALLOW_ALL'
+        }
+      }
     }
   }
 }
