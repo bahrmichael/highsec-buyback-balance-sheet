@@ -19,6 +19,7 @@ interface Contract {
     issuerId: number; // can be character or corporation
     price: number;
     locationId: number;
+    lastModified: string;
 }
 
 // could be replaced with a dynamodb deserializer
@@ -32,6 +33,7 @@ function deserialize(input: { [key: string]: AttributeValue }): Contract {
         issuerId: +input.issuerId.N,
         price: +input.price.N,
         locationId: +input.locationId.N,
+        lastModified: input['_md'].S,
     };
 }
 
@@ -74,6 +76,7 @@ const ingestContract: DynamoDBStreamHandler = async (event: DynamoDBStreamEvent)
                 forCorporation,
                 price: contract.price,
                 balanceChange,
+                lastModified: contract.lastModified,
                 created: new Date().toISOString(),
             }
         }).promise();
