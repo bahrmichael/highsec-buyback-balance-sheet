@@ -2,6 +2,9 @@
   "name": "highsec-logistics-balance-sheet",
   "version": "1.0.0",
   "main": "servlerss.ts",
+  "scripts": {
+    "deploy": "sls deploy"
+  },
   "dependencies": {
     "aws-sdk": "^2.831.0",
     "axios": "^0.21.1",
