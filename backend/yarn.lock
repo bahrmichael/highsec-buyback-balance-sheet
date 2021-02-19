@@ -463,6 +463,11 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-14.14.27.tgz#c7127f8da0498993e13b1a42faf1303d3110d2f2"
   integrity sha512-Ecfmo4YDQPwuqTCl1yBxLV5ihKfRlkBmzUEDcfIRvDxOTGQEeikr317Ln7Gcv0tjA8dVgKI3rniqW2G1OyKDng==
 
+"@types/node@^12.0.2":
+  version "12.20.1"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-12.20.1.tgz#63d36c10e162666f0107f247cdca76542c3c7472"
+  integrity sha512-tCkE96/ZTO+cWbln2xfyvd6ngHLanvVlJ3e5BeirJ3BYI5GbAyubIrmV4JjjugDly5D9fHjOL5MNsqsCnqwW6g==
+
 "@types/node@^13.7.0":
   version "13.13.41"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-13.13.41.tgz#045a4981318d31a581650ce70f340a32c3461198"
@@ -679,6 +684,15 @@ ajv@^6.12.2, ajv@^6.12.3, ajv@^6.12.5, ajv@^6.12.6:
     fast-json-stable-stringify "^2.0.0"
     json-schema-traverse "^0.4.1"
     uri-js "^4.2.2"
+
+amazon-qldb-driver-nodejs@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/amazon-qldb-driver-nodejs/-/amazon-qldb-driver-nodejs-2.1.1.tgz#1a3b6ccb8004192961eb8d8ebb70a1d6f7883177"
+  integrity sha512-8PSbarqqt+3Dd3EQX8zGaZJx2vC2NVG+3Xw8dlneq1NDRo3OpXuxVbFSxC6dnQrxz1DaROmC+eQ9ribPGV+YfQ==
+  dependencies:
+    "@types/node" "^12.0.2"
+    ion-hash-js "^2.0.0"
+    semaphore-async-await "^1.5.1"
 
 ansi-align@^3.0.0:
   version "3.0.0"
@@ -2631,6 +2645,16 @@ into-stream@^3.1.0:
     from2 "^2.1.1"
     p-is-promise "^1.1.0"
 
+ion-hash-js@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/ion-hash-js/-/ion-hash-js-2.0.0.tgz#b3fd33d01814afd9844f443c34259a4d303e1873"
+  integrity sha512-5E9YmRhxn1XGv/qftwqma1iTM0fWgfLbH8qWf6OCHIGppft7uQ+ClUkI5swNB4n9IDZ7GL0rFHINW2oPrurr5Q==
+
+ion-js@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/ion-js/-/ion-js-4.1.0.tgz#7fcc7ecbfdb16aac04a79b352a6cd9b9cbaecfb2"
+  integrity sha512-uxkF1g0DAPqCdWHzSH6z8KYcMmDZBbwVboltNMioXwZmbaB+ZvnXQtrzUjlxts1nKIUok6b8mC6HIh36GbJQbw==
+
 is-arrayish@^0.2.1:
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/is-arrayish/-/is-arrayish-0.2.1.tgz#77c99840527aa8ecb1a8ba697b80645a7a926a9d"
@@ -4048,6 +4072,11 @@ seek-bzip@^1.0.5:
   integrity sha512-e1QtP3YL5tWww8uKaOCQ18UxIT2laNBXHjV/S2WYCiK4udiv8lkG89KRIoCjUagnAmCBurjF4zEVX2ByBbnCjQ==
   dependencies:
     commander "^2.8.1"
+
+semaphore-async-await@^1.5.1:
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/semaphore-async-await/-/semaphore-async-await-1.5.1.tgz#857bef5e3644601ca4b9570b87e9df5ca12974fa"
+  integrity sha1-hXvvXjZEYBykuVcLh+nfXKEpdPo=
 
 semver@^5.4.1, semver@^5.5.0, semver@^5.6.0:
   version "5.7.1"

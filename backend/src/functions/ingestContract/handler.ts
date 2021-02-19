@@ -1,48 +1,76 @@
 import 'source-map-support/register';
 import { DynamoDBRecord, DynamoDBStreamEvent, DynamoDBStreamHandler } from 'aws-lambda';
-import { TransactionExecutor } from "amazon-qldb-driver-nodejs";
-
-import { QLDB_DRIVER, updateLedger } from './ledger';
-import { COMMISSION_RATE, HIGHSEC_BUYBACK, REWARD_RATE, TRADE_HUB } from './model_properties';
+import {Transaction} from "../lib/transaction";
+import {HIGHSEC_BUYBACK} from "../lib/constants";
+import axios from "axios";
 
 const DynamoDB = require('aws-sdk/clients/dynamodb');
+const DocumentClient = new DynamoDB.DocumentClient();
+
+const {TRANSACTIONS_TABLE} = process.env;
 
 const ingestContract: DynamoDBStreamHandler = async (event: DynamoDBStreamEvent) => {
-    const contracts: Contract[] = event.Records
+    const contracts: Transaction[] = event.Records
         .filter((record) => ['INSERT', 'MODIFY'].includes(record.eventName))
         .filter(isHighsecBuybackContract)
-        .map((record) => DynamoDB.Converter.unmarshall(record.dynamodb!.NewImage!) as Contract)
+        .map((record) => DynamoDB.Converter.unmarshall(record.dynamodb!.NewImage!) as any)
         .filter((contract) => contract.type === 'item_exchange')
         .filter((contract) => contract.status === 'finished')
         .filter((contract) => contract.acceptorId)
-        .filter((contract) => contract.assigneeId);
+        .filter((contract) => contract.assigneeId)
+        .map((contract) => {
+
+            const forCorporation = contract.acceptorId === HIGHSEC_BUYBACK;
+            const characterId = forCorporation ? contract.issuerId : contract.acceptorId;
+
+            const result: Transaction = {
+                characterId,
+                transactionId: `contract#${contract.contractId}`,
+                type: 'contract',
+                forCorporation,
+                value: contract.price,
+                date: contract['_md'],
+                contractId: contract.contractId,
+                locationId: contract.startLocationId
+            };
+
+            console.log({contract, result});
+
+            return result;
+        })
 
     console.log({contracts});
 
     for (const contract of contracts) {
 
-        const forCorporation = contract.acceptorId === HIGHSEC_BUYBACK;
-        const characterId = forCorporation ? contract.issuerId : contract.acceptorId;
-
         // skip an edge case with odd data
-        if (characterId === 0) {
+        if (contract.characterId === 0) {
             console.log('Skipping characterId 0', contract);
             continue;
         }
 
-        const action = forCorporation ? 
-            (contract.locationId in TRADE_HUB ? "haul" : "recontract")
-            : "accept";
+        const charResponse = await axios.get(`https://esi.evetech.net/v4/characters/${contract.characterId}/`);
+        if (charResponse.data.corporation_id !== HIGHSEC_BUYBACK) {
+            console.log('Skipping invalid corp', charResponse.data);
+            continue;
+        }
 
-        const comission = (
-            forCorporation ? contract.price : -contract.price
-        ) * COMMISSION_RATE;
+        const existingContract = await DocumentClient.get({
+            TableName: TRANSACTIONS_TABLE,
+            Key: {
+                characterId: contract.characterId,
+                transactionId: `contract#${contract.contractId}`
+            }
+        }).promise();
 
-        const reward = action != "accept" ? contract.price * REWARD_RATE[action] : 0;
-        
-        await QLDB_DRIVER.executeLambda(async (txn: TransactionExecutor) => {
-            await updateLedger(txn, action, comission + reward, contract.contractId, contract.lastModified, characterId);
-          });
+        if (!existingContract.Item) {
+            await DocumentClient.put({
+                TableName: TRANSACTIONS_TABLE,
+                Item: contract
+            }).promise();
+
+            console.log(`Saved new contract ${contract.contractId}`);
+        }
     }
 }
 

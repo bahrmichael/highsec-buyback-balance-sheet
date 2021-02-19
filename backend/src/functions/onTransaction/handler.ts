@@ -5,30 +5,45 @@ import { DynamoDB } from 'aws-sdk';
 import { TransactionExecutor } from "amazon-qldb-driver-nodejs";
 
 import { QLDB_DRIVER, updateLedger } from './ledger';
-import { HIGHSEC_BUYBACK } from './model_properties';
+import {Transaction} from "../lib/transaction";
+import {COMMISSION_RATE, REWARD_RATE, TRADE_HUB} from "../lib/constants";
+
+type Action = "haul" | "recontract" | "accept";
+
+async function handleContract(entry: Transaction) {
+  let action: Action;
+  if (entry.forCorporation) {
+    action = entry.locationId in TRADE_HUB ? "haul" : "recontract";
+  } else {
+    action = "accept";
+  }
+
+  const transferredIsk = entry.forCorporation ? entry.value : -entry.value;
+  const commission = transferredIsk * COMMISSION_RATE;
+
+  const reward = action != "accept" ? entry.value * REWARD_RATE[action] : 0;
+
+  await QLDB_DRIVER.executeLambda(async (txn: TransactionExecutor) => {
+    try {
+      await updateLedger(txn, action, transferredIsk, entry.transactionId, entry.date, entry.characterId, commission, reward);
+    } catch (e) {
+      console.error(e);
+    }
+  });
+}
 
 export const reactToTransaction: DynamoDBStreamHandler = async (event: DynamoDBStreamEvent) => {
 
-  // TODO: Test/fix marshalling (no idea what NewImage! actually is)
-  // TODO: make sure it's "player_donation" we need and not like "player_trading" (?)
+  const transactions: Transaction[] = event.Records.map(
+      (record) => DynamoDB.Converter.unmarshall(record.dynamodb!.NewImage!) as Transaction
+    );
 
-  const journal: WalletJournalEntry[] = event.Records.map(
-      (record) => DynamoDB.Converter.unmarshall(record.dynamodb!.NewImage!) as WalletJournalEntry
-    ).filter((entry) => entry.ref_type === "player_donation");
-
-  for (const entry of journal) {
-
-    // TODO: make sure this is actually the correct order of things
-    // the docs say first/second party is "inconsistent"
-    // my assumption that amount is always positive with first/second as positive direction might be off
-
-    const action: string = entry.first_party_id == HIGHSEC_BUYBACK ? "payment" : "repayment";
-    const amount: number = action == "payment" ? -entry.amount : entry.amount;
-    const player_id: number = action == "payment" ? entry.first_party_id : entry.second_party_id;
-
-    await QLDB_DRIVER.executeLambda(async (txn: TransactionExecutor) => {
-      await updateLedger(txn, action, amount, 0, entry.date, player_id);
-    });
+  for (const entry of transactions) {
+    if (entry.type === 'contract') {
+      await handleContract(entry);
+    } else {
+      console.log('unhandled entry', entry);
+    }
   }
 }
 

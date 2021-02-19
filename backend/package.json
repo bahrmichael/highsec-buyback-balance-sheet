@@ -6,8 +6,10 @@
     "deploy": "sls deploy"
   },
   "dependencies": {
+    "amazon-qldb-driver-nodejs": "^2.1.1",
     "aws-sdk": "^2.831.0",
     "axios": "^0.21.1",
+    "ion-js": "^4.1.0",
     "source-map-support": "^0.5.19"
   },
   "devDependencies": {

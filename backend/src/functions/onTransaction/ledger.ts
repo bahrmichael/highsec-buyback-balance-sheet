@@ -1,34 +1,49 @@
-// TODO: Make a lambda layer for this file and model_properties
-
 import { QldbDriver, Result, TransactionExecutor } from "amazon-qldb-driver-nodejs";
 import { dom } from "ion-js";
 
-const {LEDGER_NAME} = process.env;
-const {LEDGER_TABLE} = process.env;
+const {LEDGER_NAME, TABLE_NAME} = process.env;
 
-// TODO: select null ? select '' ? select id? test this real quick
-const QLDB_EXISTS: string = `SELECT EXISTS(SELECT null FROM ${LEDGER_TABLE} WHERE id = ?)`;
-const QLDB_INSERT: string = `INSERT INTO ${LEDGER_TABLE} SET action = ?, balance = ?, contractId = ?, date = ?, id = ?`;
-const QLDB_UPDATE: string = `UPDATE ${LEDGER_TABLE} SET action = ?, balance = balance + ?, contractId = ?, date = ? WHERE id = ?`;
+const QLDB_EXISTS: string = `SELECT null FROM ${TABLE_NAME} WHERE id = ?`;
+const QLDB_INSERT: string = `INSERT INTO ${TABLE_NAME} ?`;
+const QLDB_UPDATE: string = `UPDATE ${TABLE_NAME} SET actionType = ?, balance = balance + ?, commissions = commissions + ?, rewards = rewards + ?, transactionId = ?, recordDate = ? WHERE id = ?`;
 
 export const QLDB_DRIVER: QldbDriver = new QldbDriver(LEDGER_NAME);
 
-export async function updateLedger(txn: TransactionExecutor, action: string, amount: number, contract_id: number, date: string, player_id: number): Promise<void> {
-    var exists: boolean;
-    // TODO: I did test this but you might want to double check it to verify
-    await txn.execute(QLDB_EXISTS, player_id).then((result: Result) => {
-        const resultList: dom.Value[] = result.getResultList();
-        exists = resultList.values[0] != 1;
-    })
+export async function updateLedger(txn: TransactionExecutor, action: string, contractValue: number, transactionId: string, date: string, characterId: number, commission: number, reward: number): Promise<void> {
+    const existsResult: Result = await txn.execute(QLDB_EXISTS, characterId);
+    const resultList: dom.Value[] = existsResult.getResultList();
+    const exists: boolean = resultList.length > 0;
 
-    const statement = exists ? QLDB_UPDATE : QLDB_INSERT;
+    console.log({existsResult, resultList, exists});
 
-    // TODO: look at batching these (?)
-    await txn.execute(statement, action, amount, contract_id, date, player_id).then((result: Result) => {
-        const resultList: dom.Value[] = result.getResultList();
-        if (resultList.length === 0) {
-            console.log(`Ledger fail: ${action}, ${amount}, ${player_id}.`);
-        }
-        console.log(`Ledger success: ${action}, ${amount}, ${player_id}.`);
-      });
+    const balanceChange = contractValue + commission + reward;
+
+    if (exists) {
+        await txn.execute(QLDB_UPDATE, action, balanceChange, commission, reward, transactionId, date, characterId).then((result: Result) => {
+            const resultList: dom.Value[] = result.getResultList();
+            if (resultList.length === 0) {
+                console.log(`Ledger fail: ${action}, ${balanceChange}, ${characterId}.`);
+            }
+            console.log(`Ledger success: ${action}, ${balanceChange}, ${characterId}.`);
+        });
+    } else {
+        const document: Record<string, any> = {
+            actionType: action,
+            balance: balanceChange,
+            commissions: commission,
+            rewards: reward,
+            payouts: 0,
+            transactionId,
+            recordDate: date,
+            id: characterId,
+        };
+
+        await txn.execute(QLDB_INSERT, document).then((result: Result) => {
+            const resultList: dom.Value[] = result.getResultList();
+            if (resultList.length === 0) {
+                console.log(`Ledger fail: ${action}, ${balanceChange}, ${characterId}.`);
+            }
+            console.log(`Ledger success: ${action}, ${balanceChange}, ${characterId}.`);
+        });
+    }
   }

@@ -3,6 +3,7 @@ export default {
   handler: `${__dirname.split(process.cwd())[1].substring(1)}/handler.main`,
   environment: {
     LEDGER_NAME: {Ref: 'LedgerDatabase'},
+    TABLE_NAME: 'balance_sheet',
   },
   events: [
     {

@@ -2,7 +2,7 @@
 export default {
   handler: `${__dirname.split(process.cwd())[1].substring(1)}/handler.main`,
   environment: {
-    TABLE: {Ref: 'TransactionsTable'},
+    TRANSACTIONS_TABLE: {Ref: 'TransactionsTable'},
   },
   events: [
     {
@@ -12,7 +12,7 @@ export default {
   iamRoleStatements: [
     {
       Effect: 'Allow',
-      Action: ['dynamodb:PutItem'],
+      Action: ['dynamodb:PutItem', 'dynamodb:GetItem'],
       Resource: {'Fn::GetAtt': ['TransactionsTable', 'Arn']}
     }
   ],

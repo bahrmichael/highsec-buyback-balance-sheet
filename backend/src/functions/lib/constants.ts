@@ -1,12 +1,12 @@
 export const HIGHSEC_BUYBACK = 98649014;
 
 export const TRADE_HUB = [
-    30002187, //Amarr
-    30002659, //Dodixie
-    30002053, //Hek
-    30000142, //Jita
-    30000144, //Perimeter
-    30002510 //Rens
+    60008494, //Amarr
+    60011866, //Dodixie
+    60005686, //Hek
+    60003760, //Jita
+    1028858195912, //Perimeter
+    60004588 //Rens
 ];
 
 export const COMMISSION_RATE: number = 0.1;
